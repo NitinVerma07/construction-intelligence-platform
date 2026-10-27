@@ -3,8 +3,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
-from .config import settings
+from .config import ROOT, settings
 from .database import init_db
 from .routers import assistant, cracks, history, knowledge, planning, safety, valuation, weather
 
@@ -41,3 +43,17 @@ def health():
         "llm_mode": "demo" if settings.use_mock else "live",
         "model": settings.LLM_MODEL,
     }
+
+
+# Serve built frontend when present (e.g. unified deployment on Render/Railway)
+DIST_DIR = ROOT / "frontend" / "dist"
+if (DIST_DIR / "index.html").is_file():
+    if (DIST_DIR / "assets").is_dir():
+        app.mount("/assets", StaticFiles(directory=DIST_DIR / "assets"), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str):
+        file_path = DIST_DIR / full_path
+        if full_path and file_path.is_file():
+            return FileResponse(file_path)
+        return FileResponse(DIST_DIR / "index.html")

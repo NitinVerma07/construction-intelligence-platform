@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: construction-intelligence-platform
+    env: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: LLM_MODE
+        value: auto
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: "*"
